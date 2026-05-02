@@ -22,7 +22,8 @@ export const BALANCE = {
 
   // 적
   ENEMY_SPEED: 60,
-  ENEMY_HP: 20,
+  // POC: 총알 데미지보다 1 큼. "탄환 화력" 업그레이드 1회로 1타 처치 성립
+  ENEMY_HP: 11,
   ENEMY_DAMAGE: 10,
   ENEMY_RADIUS: 7,
   ENEMY_SPAWN_INTERVAL: 5.0,

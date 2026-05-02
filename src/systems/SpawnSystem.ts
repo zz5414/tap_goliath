@@ -3,7 +3,8 @@ import { createChaser, type Enemy } from '../entities/Enemy.ts';
 import { type Vec2 } from '../util/math.ts';
 
 export class SpawnSystem {
-  private timer = BALANCE.ENEMY_SPAWN_INTERVAL;
+  // 시작과 동시에 첫 웨이브가 발생하도록 0으로 시작
+  private timer = 0;
   private elapsed = 0;
   private waveCount = 0;
 

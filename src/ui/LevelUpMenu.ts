@@ -33,6 +33,14 @@ const CARDS: Card[] = [
     },
   },
   {
+    id: 'bullet_damage',
+    title: '탄환 화력',
+    desc: '총알 데미지 +20%',
+    apply: (g) => {
+      g.state.player.turret.bulletDamage *= 1.2;
+    },
+  },
+  {
     id: 'move_speed',
     title: '드리프트 가속',
     desc: '본체 이동속도 +10%',
@@ -70,19 +78,26 @@ const styleAssign = (el: HTMLElement, s: Record<string, string>): void => {
 const show = (game: Game): void => {
   game.state.paused = true;
 
+  const isNarrow = window.innerWidth < 600;
+
   const overlay = document.createElement('div');
   styleAssign(overlay, {
     position: 'fixed',
     inset: '0',
     background: 'rgba(0,0,0,0.55)',
     display: 'flex',
+    flexDirection: isNarrow ? 'column' : 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '16px',
-    padding: '16px',
+    gap: isNarrow ? '12px' : '16px',
+    padding:
+      'max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))',
     zIndex: '10',
     flexWrap: 'wrap',
     pointerEvents: 'auto',
+    overflowY: 'auto',
+    boxSizing: 'border-box',
+    touchAction: 'manipulation',
   });
   // 빈 영역 클릭이 캔버스로 새지 않도록 차단
   overlay.addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -90,13 +105,14 @@ const show = (game: Game): void => {
   for (const card of pickThree()) {
     const el = document.createElement('div');
     styleAssign(el, {
-      flex: '1 1 200px',
-      maxWidth: '260px',
-      minHeight: '180px',
+      flex: isNarrow ? '0 0 auto' : '1 1 200px',
+      width: isNarrow ? '100%' : 'auto',
+      maxWidth: isNarrow ? '420px' : '260px',
+      minHeight: isNarrow ? '96px' : '180px',
       background: '#15151f',
       border: '1px solid rgba(95,255,204,0.3)',
-      borderRadius: '8px',
-      padding: '20px 16px',
+      borderRadius: '12px',
+      padding: isNarrow ? '18px 16px' : '20px 16px',
       color: '#fff',
       fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
       cursor: 'pointer',
@@ -106,15 +122,26 @@ const show = (game: Game): void => {
       alignItems: 'center',
       textAlign: 'center',
       userSelect: 'none',
+      boxSizing: 'border-box',
+      touchAction: 'manipulation',
+      WebkitTapHighlightColor: 'transparent',
     });
 
     const title = document.createElement('div');
     title.textContent = card.title;
-    styleAssign(title, { fontSize: '18px', marginBottom: '12px', color: '#5fc' });
+    styleAssign(title, {
+      fontSize: isNarrow ? '20px' : '18px',
+      marginBottom: '10px',
+      color: '#5fc',
+    });
 
     const desc = document.createElement('div');
     desc.textContent = card.desc;
-    styleAssign(desc, { fontSize: '13px', opacity: '0.85', lineHeight: '1.5' });
+    styleAssign(desc, {
+      fontSize: isNarrow ? '14px' : '13px',
+      opacity: '0.85',
+      lineHeight: '1.5',
+    });
 
     el.appendChild(title);
     el.appendChild(desc);
