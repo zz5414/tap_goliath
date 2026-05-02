@@ -10,7 +10,10 @@ import { hazardsNear, resetHazards } from '../systems/HazardSystem.ts';
 import { SpawnSystem } from '../systems/SpawnSystem.ts';
 import { findNearestEnemy } from '../systems/TargetingSystem.ts';
 import { createXpStats, updateXp, type XpStats } from '../systems/XpSystem.ts';
+import { type Vec2 } from '../util/math.ts';
 import { Camera } from './Camera.ts';
+
+export type GameMode = 'normal' | 'god';
 
 export interface GameState {
   player: Player;
@@ -27,14 +30,17 @@ export interface GameState {
   paused: boolean;
   gameOver: boolean;
   targetedEnemy: Enemy | null;
+  mode: GameMode;
 }
 
 export class Game {
   state: GameState;
   private spawnSystem = new SpawnSystem();
   private buttonPressed = false;
+  // god 모드: 다음 update에서 적용될 목표 월드 좌표(있으면 그쪽으로 heading 설정)
+  private pendingHeadingTarget: Vec2 | null = null;
 
-  constructor(camera: Camera) {
+  constructor(camera: Camera, mode: GameMode = 'normal') {
     const player = createPlayer();
     player.heading = Math.random() * Math.PI * 2;
     camera.snapTo(player.pos);
@@ -53,27 +59,48 @@ export class Game {
       paused: false,
       gameOver: false,
       targetedEnemy: null,
+      mode,
     };
   }
 
-  pressButton(): void {
+  pressButton(worldTarget?: Vec2 | null): void {
     if (this.state.gameOver || this.state.paused) return;
+    if (this.state.mode === 'god' && worldTarget) {
+      this.pendingHeadingTarget = worldTarget;
+      return;
+    }
     this.buttonPressed = true;
+  }
+
+  // god 모드 전용: 포인터를 누른 채 드래그하는 동안 호출되어 heading을 갱신한다.
+  steerToward(worldTarget: Vec2): void {
+    if (this.state.gameOver || this.state.paused) return;
+    if (this.state.mode !== 'god') return;
+    this.pendingHeadingTarget = worldTarget;
   }
 
   update(dt: number): void {
     if (this.state.paused || this.state.gameOver) return;
     const s = this.state;
 
-    // 1. 오작동: 일정 주기마다 자동 클릭이 트리거됨
-    s.player.malfunctionTimer -= dt;
-    if (s.player.malfunctionTimer <= 0) {
-      this.buttonPressed = true;
-      s.player.malfunctionTimer += s.player.malfunctionInterval;
+    // 1. 오작동: 일정 주기마다 자동 클릭이 트리거됨 (god 모드에서는 비활성)
+    if (s.mode !== 'god') {
+      s.player.malfunctionTimer -= dt;
+      if (s.player.malfunctionTimer <= 0) {
+        this.buttonPressed = true;
+        s.player.malfunctionTimer += s.player.malfunctionInterval;
+      }
     }
 
     // 2. input → heading 변경
-    if (this.buttonPressed) {
+    if (s.mode === 'god' && this.pendingHeadingTarget) {
+      const dx = this.pendingHeadingTarget.x - s.player.pos.x;
+      const dy = this.pendingHeadingTarget.y - s.player.pos.y;
+      if (dx * dx + dy * dy > 1) {
+        s.player.heading = Math.atan2(dy, dx);
+      }
+      this.pendingHeadingTarget = null;
+    } else if (this.buttonPressed) {
       s.player.heading = pickDirection(s.player.heading, s.player.pos, s.enemies);
       this.buttonPressed = false;
     }

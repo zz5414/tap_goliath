@@ -1,10 +1,12 @@
 import { Camera } from './game/Camera.ts';
-import { Game } from './game/Game.ts';
+import { Game, type GameMode } from './game/Game.ts';
 import { Input } from './game/Input.ts';
 import { HUD } from './render/HUD.ts';
 import { Renderer } from './render/Renderer.ts';
 import { closeGameOverMenu, tickGameOverMenu } from './ui/GameOverMenu.ts';
 import { closeLevelUpMenu, tickLevelUpMenu } from './ui/LevelUpMenu.ts';
+import { closeStartMenu, showStartMenu } from './ui/StartMenu.ts';
+import { type Vec2 } from './util/math.ts';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
 if (!canvas) throw new Error('canvas#game not found');
@@ -27,23 +29,44 @@ const resize = (): void => {
 resize();
 window.addEventListener('resize', resize);
 
-let game = new Game(camera);
+let game: Game | null = null;
 const renderer = new Renderer(ctx);
 const hud = new HUD(ctx);
 
 const input = new Input();
 input.attach(canvas);
-input.onButtonPress(() => {
-  // 게임오버 시 캔버스 입력은 무시 — 재시작은 별도 버튼(GameOverMenu)을 통해서만.
-  if (game.state.gameOver) return;
-  game.pressButton();
+
+const screenToWorldTarget = (screen: Vec2): Vec2 => camera.screenToWorld(screen);
+
+input.onButtonPress((screenPos) => {
+  if (!game || game.state.gameOver) return;
+  const target = screenPos ? screenToWorldTarget(screenPos) : null;
+  game.pressButton(target);
 });
 
-const restart = (): void => {
+input.onPointerDrag((screenPos) => {
+  if (!game || game.state.gameOver || game.state.paused) return;
+  if (game.state.mode !== 'god') return;
+  game.steerToward(screenToWorldTarget(screenPos));
+});
+
+const startGame = (mode: GameMode): void => {
   closeLevelUpMenu();
   closeGameOverMenu();
-  game = new Game(camera);
+  closeStartMenu();
+  game = new Game(camera, mode);
 };
+
+const openStart = (): void => {
+  closeLevelUpMenu();
+  closeGameOverMenu();
+  game = null;
+  showStartMenu(startGame);
+};
+
+const restart = (): void => openStart();
+
+openStart();
 
 let lastTime = performance.now();
 const frame = (now: number): void => {
@@ -52,11 +75,19 @@ const frame = (now: number): void => {
   // 큰 스파이크 (탭 전환 등) 클램프
   if (dt > 1 / 30) dt = 1 / 30;
 
-  game.update(dt);
-  tickLevelUpMenu(game);
-  tickGameOverMenu(game, restart);
-  renderer.draw(game.state);
-  hud.draw(game.state);
+  if (game) {
+    game.update(dt);
+    tickLevelUpMenu(game);
+    tickGameOverMenu(game, restart);
+    renderer.draw(game.state);
+    hud.draw(game.state);
+  } else {
+    // 시작 메뉴 노출 중 — 캔버스를 비워둔다
+    const w = camera.viewportWidth;
+    const h = camera.viewportHeight;
+    ctx.fillStyle = '#0a0a12';
+    ctx.fillRect(0, 0, w, h);
+  }
 
   requestAnimationFrame(frame);
 };
