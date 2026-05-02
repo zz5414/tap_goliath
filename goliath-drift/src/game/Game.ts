@@ -3,16 +3,21 @@ import { type Bullet, updateBullet } from '../entities/Bullet.ts';
 import { type Enemy, updateEnemy } from '../entities/Enemy.ts';
 import { createPlayer, type Player, updatePlayer } from '../entities/Player.ts';
 import { rotateTurretToward } from '../entities/Turret.ts';
+import { createXpOrb, type XpOrb } from '../entities/XpOrb.ts';
 import { circleCircle, circleRect } from '../systems/CollisionSystem.ts';
 import { pickDirection } from '../systems/DirectionPicker.ts';
 import { SpawnSystem } from '../systems/SpawnSystem.ts';
 import { findNearestEnemy } from '../systems/TargetingSystem.ts';
+import { createXpStats, updateXp, type XpStats } from '../systems/XpSystem.ts';
 import { Camera } from './Camera.ts';
 
 export interface GameState {
   player: Player;
   enemies: Enemy[];
   bullets: Bullet[];
+  xpOrbs: XpOrb[];
+  xp: XpStats;
+  pendingLevelUps: number;
   camera: Camera;
   time: number;
   kills: number;
@@ -34,6 +39,9 @@ export class Game {
       player,
       enemies: [],
       bullets: [],
+      xpOrbs: [],
+      xp: createXpStats(),
+      pendingLevelUps: 0,
       camera,
       time: 0,
       kills: 0,
@@ -54,7 +62,7 @@ export class Game {
 
     // 1. input → heading 변경
     if (this.buttonPressed) {
-      s.player.heading = pickDirection(s.player.heading);
+      s.player.heading = pickDirection(s.player.heading, s.player.pos, s.enemies);
       this.buttonPressed = false;
     }
 
@@ -99,15 +107,20 @@ export class Game {
     // 8. 충돌
     this.handleCollisions();
 
-    // 9. 정리
+    // 9. XP 흡수 / 레벨업
+    const result = updateXp(s.xp, s.xpOrbs, s.player.pos, dt);
+    s.xpOrbs = result.remaining;
+    s.pendingLevelUps += result.levelUps;
+
+    // 10. 정리
     s.bullets = s.bullets.filter((b) => b.lifetime > 0);
     s.enemies = s.enemies.filter((e) => e.hp > 0);
 
-    // 10. 시간 / 카메라
+    // 11. 시간 / 카메라
     s.time += dt;
     s.camera.follow(s.player.pos, dt);
 
-    // 11. HP 체크
+    // 12. HP 체크
     if (s.player.hp <= 0) {
       s.player.hp = 0;
       s.gameOver = true;
@@ -125,7 +138,10 @@ export class Game {
         if (circleCircle(b.pos, BALANCE.BULLET_RADIUS, e.pos, e.radius)) {
           e.hp -= b.damage;
           b.lifetime = 0;
-          if (e.hp <= 0) s.kills += 1;
+          if (e.hp <= 0) {
+            s.kills += 1;
+            s.xpOrbs.push(createXpOrb(e.pos, BALANCE.XP_PER_KILL));
+          }
           break;
         }
       }

@@ -3,6 +3,7 @@ import { Game } from './game/Game.ts';
 import { Input } from './game/Input.ts';
 import { HUD } from './render/HUD.ts';
 import { Renderer } from './render/Renderer.ts';
+import { closeLevelUpMenu, tickLevelUpMenu } from './ui/LevelUpMenu.ts';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
 if (!canvas) throw new Error('canvas#game not found');
@@ -33,6 +34,7 @@ const input = new Input();
 input.attach(canvas);
 input.onButtonPress(() => {
   if (game.state.gameOver) {
+    closeLevelUpMenu();
     game = new Game(camera);
     return;
   }
@@ -47,6 +49,7 @@ const frame = (now: number): void => {
   if (dt > 1 / 30) dt = 1 / 30;
 
   game.update(dt);
+  tickLevelUpMenu(game);
   renderer.draw(game.state);
   hud.draw(game.state);
 

@@ -20,7 +20,7 @@ export class Renderer {
     this.drawGrid(state);
     this.drawAimLine(state);
     this.drawBullets(state);
-    this.drawXpOrbs();
+    this.drawXpOrbs(state);
     this.drawEnemies(state);
     this.drawPlayer(state);
   }
@@ -74,8 +74,20 @@ export class Renderer {
     }
   }
 
-  private drawXpOrbs(): void {
-    // Phase 2에서 채움
+  private drawXpOrbs(state: GameState): void {
+    const ctx = this.ctx;
+    ctx.fillStyle = BALANCE.COLOR_XP_ORB;
+    for (const orb of state.xpOrbs) {
+      const p = state.camera.worldToScreen(orb.pos);
+      const r = BALANCE.XP_ORB_RADIUS;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y - r);
+      ctx.lineTo(p.x + r, p.y);
+      ctx.lineTo(p.x, p.y + r);
+      ctx.lineTo(p.x - r, p.y);
+      ctx.closePath();
+      ctx.fill();
+    }
   }
 
   private drawEnemies(state: GameState): void {

@@ -4,12 +4,18 @@ import { type Vec2 } from '../util/math.ts';
 
 export class SpawnSystem {
   private timer = BALANCE.ENEMY_SPAWN_INTERVAL;
+  private elapsed = 0;
   private waveCount = 0;
 
   update(dt: number, playerPos: Vec2, enemies: Enemy[]): void {
+    this.elapsed += dt;
     this.timer -= dt;
     if (this.timer > 0) return;
-    this.timer += BALANCE.ENEMY_SPAWN_INTERVAL;
+    const interval = Math.max(
+      BALANCE.ENEMY_SPAWN_INTERVAL_MIN,
+      BALANCE.ENEMY_SPAWN_INTERVAL - this.elapsed / BALANCE.ENEMY_SPAWN_INTERVAL_DECAY
+    );
+    this.timer += interval;
     const count =
       BALANCE.ENEMY_SPAWN_COUNT_INITIAL +
       this.waveCount * BALANCE.ENEMY_SPAWN_COUNT_GROWTH;

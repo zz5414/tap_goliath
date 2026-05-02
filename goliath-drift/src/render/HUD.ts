@@ -17,6 +17,8 @@ export class HUD {
     const ctx = this.ctx;
     const w = state.camera.viewportWidth;
 
+    this.drawXpBar(state, w);
+
     ctx.font = '14px ui-monospace, SFMono-Regular, Menlo, monospace';
     ctx.textBaseline = 'top';
 
@@ -33,6 +35,26 @@ export class HUD {
     if (state.gameOver) {
       this.drawGameOver(state);
     }
+  }
+
+  private drawXpBar(state: GameState, w: number): void {
+    const ctx = this.ctx;
+    const xp = state.xp;
+    const ratio =
+      xp.xpToNextLevel > 0
+        ? Math.max(0, Math.min(1, xp.xp / xp.xpToNextLevel))
+        : 0;
+    const barH = 4;
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(0, 0, w, barH);
+    ctx.fillStyle = '#3ff';
+    ctx.fillRect(0, 0, w * ratio, barH);
+
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`Lv ${xp.level}`, w / 2, 12);
   }
 
   private drawGameOver(state: GameState): void {
