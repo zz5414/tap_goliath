@@ -92,26 +92,30 @@ export class Game {
       rotateTurretToward(s.player.turret, s.player.pos, s.targetedEnemy.pos, dt);
     }
 
-    // 6. 발사 — 포신 수만큼 부채꼴로 동시 발사
+    // 6. 발사 — 포신 수만큼 부채꼴로 동시 발사 (+ 후방 포대 옵션)
     s.player.turret.fireCooldown -= dt;
     if (s.player.turret.fireCooldown <= 0 && s.targetedEnemy) {
       s.player.turret.fireCooldown += s.player.turret.fireInterval;
       const t = s.player.turret;
       const n = Math.max(1, t.barrels);
       const center = (n - 1) / 2;
-      for (let i = 0; i < n; i++) {
-        const a = t.angle + (i - center) * BALANCE.TURRET_BARREL_SPREAD;
-        s.bullets.push({
-          pos: { x: s.player.pos.x, y: s.player.pos.y },
-          vel: {
-            x: Math.cos(a) * t.bulletSpeed,
-            y: Math.sin(a) * t.bulletSpeed,
-          },
-          damage: t.bulletDamage,
-          lifetime: BALANCE.BULLET_LIFETIME,
-          owner: 'player',
-        });
-      }
+      const fan = (baseAngle: number): void => {
+        for (let i = 0; i < n; i++) {
+          const a = baseAngle + (i - center) * BALANCE.TURRET_BARREL_SPREAD;
+          s.bullets.push({
+            pos: { x: s.player.pos.x, y: s.player.pos.y },
+            vel: {
+              x: Math.cos(a) * t.bulletSpeed,
+              y: Math.sin(a) * t.bulletSpeed,
+            },
+            damage: t.bulletDamage,
+            lifetime: BALANCE.BULLET_LIFETIME,
+            owner: 'player',
+          });
+        }
+      };
+      fan(t.angle);
+      if (t.hasRearCannon) fan(t.angle + Math.PI);
     } else if (s.player.turret.fireCooldown < 0) {
       // 타겟 없을 땐 쿨다운을 0으로 클램프
       s.player.turret.fireCooldown = 0;

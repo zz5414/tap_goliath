@@ -11,6 +11,8 @@ export interface Turret {
   bulletDamage: number;
   // 포신 수. 한 번의 사격 틱에서 부채꼴로 N발이 발사된다.
   barrels: number;
+  // 후방 포대: true면 매 사격 틱마다 angle 반대 방향으로도 같은 부채꼴이 동시 발사된다.
+  hasRearCannon: boolean;
 }
 
 export const createTurret = (): Turret => ({
@@ -21,6 +23,7 @@ export const createTurret = (): Turret => ({
   bulletSpeed: BALANCE.BULLET_SPEED,
   bulletDamage: BALANCE.BULLET_DAMAGE,
   barrels: BALANCE.TURRET_BARRELS,
+  hasRearCannon: false,
 });
 
 export const rotateTurretToward = (

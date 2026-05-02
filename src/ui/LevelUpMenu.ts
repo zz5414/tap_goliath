@@ -5,6 +5,8 @@ interface Card {
   title: string;
   desc: string;
   apply: (game: Game) => void;
+  // 풀에서 후보로 등장 가능한지 (1회성 카드 제외용)
+  available?: (game: Game) => boolean;
 }
 
 const CARDS: Card[] = [
@@ -57,6 +59,15 @@ const CARDS: Card[] = [
     },
   },
   {
+    id: 'rear_cannon',
+    title: '후방 포대',
+    desc: '정반대 방향으로도 동시 발사',
+    apply: (g) => {
+      g.state.player.turret.hasRearCannon = true;
+    },
+    available: (g) => !g.state.player.turret.hasRearCannon,
+  },
+  {
     id: 'move_speed',
     title: '드리프트 가속',
     desc: '본체 이동속도 +10%',
@@ -89,11 +100,11 @@ const CARDS: Card[] = [
 
 let container: HTMLDivElement | null = null;
 
-// 첫 레벨업 메뉴에서 반드시 보여줄 필수 카드 — 초반 빌드의 뼈대
-const MANDATORY_FIRST_IDS = ['bullet_damage', 'pickup_radius', 'add_barrel'] as const;
+// 첫 레벨업 메뉴(레벨 2 진입 시)에서 반드시 보여줄 필수 카드 — 초반 빌드의 뼈대
+const MANDATORY_FIRST_IDS = ['bullet_damage', 'pickup_radius', 'rear_cannon'] as const;
 
-const pickThree = (): Card[] => {
-  const pool = [...CARDS];
+const pickThree = (game: Game): Card[] => {
+  const pool = CARDS.filter((c) => c.available?.(game) ?? true);
   const out: Card[] = [];
   for (let i = 0; i < 3 && pool.length > 0; i++) {
     const idx = Math.floor(Math.random() * pool.length);
@@ -142,7 +153,7 @@ const show = (game: Game): void => {
   // 빈 영역 클릭이 캔버스로 새지 않도록 차단
   overlay.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-  const cards = game.state.firstCardShown ? pickThree() : pickMandatoryThree();
+  const cards = game.state.firstCardShown ? pickThree(game) : pickMandatoryThree();
   game.state.firstCardShown = true;
 
   for (const card of cards) {
