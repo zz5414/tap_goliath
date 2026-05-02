@@ -57,6 +57,18 @@ const CARDS: Card[] = [
       p.hp = Math.min(p.hpMax, p.hp + 30);
     },
   },
+  {
+    id: 'stabilizer',
+    title: '안정화 회로',
+    desc: '오작동 주기 +25%',
+    apply: (g) => {
+      const p = g.state.player;
+      const ratio = 1.25;
+      p.malfunctionInterval *= ratio;
+      // 다음 트리거까지 시간도 비례해 늘려준다 — 즉시 자동 클릭이 와서 보상이 무의미해지지 않도록.
+      p.malfunctionTimer *= ratio;
+    },
+  },
 ];
 
 let container: HTMLDivElement | null = null;

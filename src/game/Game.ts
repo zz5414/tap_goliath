@@ -6,6 +6,7 @@ import { rotateTurretToward } from '../entities/Turret.ts';
 import { createXpOrb, type XpOrb } from '../entities/XpOrb.ts';
 import { circleCircle, circleRect } from '../systems/CollisionSystem.ts';
 import { pickDirection } from '../systems/DirectionPicker.ts';
+import { hazardsNear, resetHazards } from '../systems/HazardSystem.ts';
 import { SpawnSystem } from '../systems/SpawnSystem.ts';
 import { findNearestEnemy } from '../systems/TargetingSystem.ts';
 import { createXpStats, updateXp, type XpStats } from '../systems/XpSystem.ts';
@@ -35,6 +36,7 @@ export class Game {
     const player = createPlayer();
     player.heading = Math.random() * Math.PI * 2;
     camera.snapTo(player.pos);
+    resetHazards();
     this.state = {
       player,
       enemies: [],
@@ -60,7 +62,14 @@ export class Game {
     if (this.state.paused || this.state.gameOver) return;
     const s = this.state;
 
-    // 1. input → heading 변경
+    // 1. 오작동: 일정 주기마다 자동 클릭이 트리거됨
+    s.player.malfunctionTimer -= dt;
+    if (s.player.malfunctionTimer <= 0) {
+      this.buttonPressed = true;
+      s.player.malfunctionTimer += s.player.malfunctionInterval;
+    }
+
+    // 2. input → heading 변경
     if (this.buttonPressed) {
       s.player.heading = pickDirection(s.player.heading, s.player.pos, s.enemies);
       this.buttonPressed = false;
@@ -155,7 +164,17 @@ export class Game {
       if (circleRect(e.pos, e.radius, s.player.pos, half, half)) {
         s.player.hp -= e.damage;
         s.player.invulnTimer = BALANCE.PLAYER_INVULN_DURATION;
-        break;
+        return;
+      }
+    }
+
+    // 위험 지형 ↔ 본체
+    const range = BALANCE.HAZARD_RADIUS_MAX + half + 8;
+    for (const h of hazardsNear(s.player.pos, range)) {
+      if (circleRect(h.pos, h.radius, s.player.pos, half, half)) {
+        s.player.hp -= BALANCE.HAZARD_DAMAGE;
+        s.player.invulnTimer = BALANCE.PLAYER_INVULN_DURATION;
+        return;
       }
     }
   }

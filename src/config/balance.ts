@@ -8,11 +8,25 @@ export const BALANCE = {
 
   // 포탑
   TURRET_ROTATE_SPEED: 63, // 90에서 -30%
-  TURRET_FIRE_INTERVAL: 0.6,
+  TURRET_FIRE_INTERVAL: 1.2, // 0.6에서 -50% (장전속도 저하)
   BULLET_SPEED: 320,
   BULLET_DAMAGE: 10,
   BULLET_LIFETIME: 1.5,
   BULLET_RADIUS: 3,
+
+  // 오작동: 일정 주기마다 자동 클릭되어 방향이 강제 전환된다
+  MALFUNCTION_INTERVAL: 4.0,
+  MALFUNCTION_WARN_DURATION: 0.6, // 직전 깜빡임 시간
+
+  // 지형 위험 (피해 입히는 지형)
+  HAZARD_CHUNK_SIZE: 260,
+  HAZARD_CHUNK_PROBABILITY: 0.55,
+  HAZARD_RADIUS_MIN: 26,
+  HAZARD_RADIUS_MAX: 44,
+  HAZARD_DAMAGE: 8,
+  HAZARD_SAFE_ZONE_RADIUS: 220, // 시작 지점 주변엔 위험지 없음
+  COLOR_HAZARD: '#a32',
+  COLOR_HAZARD_CORE: '#f63',
 
   // 방향 선택
   DIRECTION_CANDIDATES: 12,

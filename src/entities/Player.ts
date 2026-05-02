@@ -10,6 +10,9 @@ export interface Player {
   hpMax: number;
   invulnTimer: number;
   turret: Turret;
+  // 오작동: malfunctionTimer가 0 이하가 되면 자동 클릭되어 방향이 변경됨
+  malfunctionInterval: number;
+  malfunctionTimer: number;
 }
 
 export const createPlayer = (): Player => ({
@@ -20,6 +23,8 @@ export const createPlayer = (): Player => ({
   hpMax: BALANCE.PLAYER_HP_MAX,
   invulnTimer: 0,
   turret: createTurret(),
+  malfunctionInterval: BALANCE.MALFUNCTION_INTERVAL,
+  malfunctionTimer: BALANCE.MALFUNCTION_INTERVAL,
 });
 
 export const updatePlayer = (player: Player, dt: number): void => {
