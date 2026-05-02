@@ -1,6 +1,6 @@
 export const BALANCE = {
   // 본체
-  PLAYER_SPEED: 72, // 120에서 -40% (플레이테스트 후 템포 조정)
+  PLAYER_SPEED: 100,
   PLAYER_HP_MAX: 100,
   PLAYER_INVULN_DURATION: 1.0,
   PLAYER_RADIUS: 8,
@@ -9,13 +9,15 @@ export const BALANCE = {
   // 포탑
   TURRET_ROTATE_SPEED: 63, // 90에서 -30%
   TURRET_FIRE_INTERVAL: 1.2, // 0.6에서 -50% (장전속도 저하)
-  BULLET_SPEED: 320,
+  TURRET_BARRELS: 1,
+  TURRET_BARREL_SPREAD: 0.14, // rad — 인접 포신 간 부채꼴 각도 (~8°)
+  BULLET_SPEED: 150,
   BULLET_DAMAGE: 10,
-  BULLET_LIFETIME: 1.5,
+  BULLET_LIFETIME: 5,
   BULLET_RADIUS: 3,
 
   // 오작동: 일정 주기마다 자동 클릭되어 방향이 강제 전환된다
-  MALFUNCTION_INTERVAL: 4.0,
+  MALFUNCTION_INTERVAL: 10.0,
   MALFUNCTION_WARN_DURATION: 0.6, // 직전 깜빡임 시간
 
   // 지형 위험 (피해 입히는 지형)
@@ -24,9 +26,13 @@ export const BALANCE = {
   HAZARD_RADIUS_MIN: 26,
   HAZARD_RADIUS_MAX: 44,
   HAZARD_DAMAGE: 8,
+  HAZARD_DAMAGE_TO_ENEMY: 15, // 적도 위험지 밟으면 받는 피해
   HAZARD_SAFE_ZONE_RADIUS: 220, // 시작 지점 주변엔 위험지 없음
-  COLOR_HAZARD: '#a32',
-  COLOR_HAZARD_CORE: '#f63',
+  // 시간 ramp: DELAY 동안은 위험지 0개. 이후 DURATION 동안 0 → 최대 밀도(=PROBABILITY)로 선형 증가
+  HAZARD_RAMP_DELAY: 10,
+  HAZARD_RAMP_DURATION: 90,
+  COLOR_HAZARD: "#a32",
+  COLOR_HAZARD_CORE: "#f63",
 
   // 방향 선택
   DIRECTION_CANDIDATES: 12,
@@ -43,32 +49,34 @@ export const BALANCE = {
   ENEMY_SPAWN_INTERVAL: 5.0,
   ENEMY_SPAWN_INTERVAL_MIN: 1.5,
   ENEMY_SPAWN_INTERVAL_DECAY: 60.0, // 매 60초마다 인터벌이 1초씩 줄어든다 (clamp = MIN)
-  ENEMY_SPAWN_COUNT_INITIAL: 5,
-  ENEMY_SPAWN_COUNT_GROWTH: 1,
-  ENEMY_SPAWN_DISTANCE: 400,
+  ENEMY_SPAWN_COUNT_INITIAL: 1,
+  // 분수 + floor → 같은 수가 여러 웨이브 반복되다 계단식으로 +1
+  // 0.34 → 1,1,1, 2,2,2, 3,3,3, ...
+  ENEMY_SPAWN_COUNT_GROWTH: 0.34,
+  ENEMY_SPAWN_DISTANCE: 500,
 
   // 경험치
   XP_ORB_PICKUP_RADIUS: 80,
   XP_ORB_SPEED: 240,
   XP_ORB_RADIUS: 4,
   XP_PER_KILL: 5,
-  XP_LEVELUP_BASE: 20,
+  XP_LEVELUP_BASE: 15,
   XP_LEVELUP_GROWTH: 1.4,
 
   // 카메라
   CAMERA_LERP: 0.1,
 
   // 색상
-  COLOR_BG: '#0a0a12',
-  COLOR_PLAYER: '#5fc',
-  COLOR_TURRET: '#fff',
-  COLOR_ENEMY: '#f33',
-  COLOR_ENEMY_TARGETED: '#fb3',
-  COLOR_TARGET_RING: '#fff',
-  COLOR_BULLET_PLAYER: '#fe4',
-  COLOR_BULLET_ENEMY: '#f3f',
-  COLOR_XP_ORB: '#3ff',
-  COLOR_AIM_LINE: 'rgba(255,255,255,0.15)',
+  COLOR_BG: "#0a0a12",
+  COLOR_PLAYER: "#5fc",
+  COLOR_TURRET: "#fff",
+  COLOR_ENEMY: "#f33",
+  COLOR_ENEMY_TARGETED: "#fb3",
+  COLOR_TARGET_RING: "#fff",
+  COLOR_BULLET_PLAYER: "#fe4",
+  COLOR_BULLET_ENEMY: "#f3f",
+  COLOR_XP_ORB: "#3ff",
+  COLOR_AIM_LINE: "rgba(255,255,255,0.15)",
 
   // 포탑 시각
   TURRET_LENGTH: 14,

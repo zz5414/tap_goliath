@@ -13,6 +13,8 @@ export interface Player {
   // 오작동: malfunctionTimer가 0 이하가 되면 자동 클릭되어 방향이 변경됨
   malfunctionInterval: number;
   malfunctionTimer: number;
+  // 경험치 구슬을 끌어당기는 반경 — 업그레이드로 증가시킬 수 있다
+  pickupRadius: number;
 }
 
 export const createPlayer = (): Player => ({
@@ -25,6 +27,7 @@ export const createPlayer = (): Player => ({
   turret: createTurret(),
   malfunctionInterval: BALANCE.MALFUNCTION_INTERVAL,
   malfunctionTimer: BALANCE.MALFUNCTION_INTERVAL,
+  pickupRadius: BALANCE.XP_ORB_PICKUP_RADIUS,
 });
 
 export const updatePlayer = (player: Player, dt: number): void => {

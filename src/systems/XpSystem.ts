@@ -22,6 +22,7 @@ export const updateXp = (
   stats: XpStats,
   orbs: XpOrb[],
   playerPos: Vec2,
+  pickupRadius: number,
   dt: number
 ): { remaining: XpOrb[]; levelUps: number } => {
   let levelUps = 0;
@@ -29,7 +30,7 @@ export const updateXp = (
   const collectR = BALANCE.PLAYER_RADIUS + BALANCE.XP_ORB_RADIUS;
   const collectRSq = collectR * collectR;
   for (const orb of orbs) {
-    updateXpOrb(orb, playerPos, dt);
+    updateXpOrb(orb, playerPos, dt, pickupRadius);
     const dx = orb.pos.x - playerPos.x;
     const dy = orb.pos.y - playerPos.y;
     if (dx * dx + dy * dy <= collectRSq) {

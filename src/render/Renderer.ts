@@ -37,7 +37,8 @@ export class Renderer {
       cam.x - w / 2 - margin,
       cam.y - h / 2 - margin,
       cam.x + w / 2 + margin,
-      cam.y + h / 2 + margin
+      cam.y + h / 2 + margin,
+      state.time
     );
     for (const hz of hazards) {
       const p = state.camera.worldToScreen(hz.pos);
@@ -174,8 +175,8 @@ export class Renderer {
       }
     }
 
-    // 포탑: 본체 정중앙에서 angle 방향으로 뻗는 직사각형
-    this.drawTurret(screen, player.turret.angle);
+    // 포탑: 본체 정중앙에서 angle 방향으로 뻗는 직사각형 (포신 수만큼 부채꼴)
+    this.drawTurret(screen, player.turret.angle, player.turret.barrels);
 
     // HP 막대 (본체 위)
     this.drawPlayerHpBar(screen, player.hp, player.hpMax);
@@ -189,16 +190,23 @@ export class Renderer {
     );
   }
 
-  private drawTurret(pivot: Vec2, angle: number): void {
+  private drawTurret(pivot: Vec2, angle: number, barrels: number): void {
     const ctx = this.ctx;
     const len = BALANCE.TURRET_LENGTH;
     const wid = BALANCE.TURRET_WIDTH;
+    const n = Math.max(1, barrels);
+    const center = (n - 1) / 2;
     ctx.save();
     ctx.translate(pivot.x, pivot.y);
-    ctx.rotate(angle);
     ctx.fillStyle = BALANCE.COLOR_TURRET;
-    // 중심점에서 전방으로만 len 뻗는 형태
-    ctx.fillRect(0, -wid / 2, len, wid);
+    for (let i = 0; i < n; i++) {
+      const a = angle + (i - center) * BALANCE.TURRET_BARREL_SPREAD;
+      ctx.save();
+      ctx.rotate(a);
+      // 중심점에서 전방으로만 len 뻗는 형태
+      ctx.fillRect(0, -wid / 2, len, wid);
+      ctx.restore();
+    }
     ctx.restore();
   }
 

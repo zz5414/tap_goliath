@@ -41,6 +41,22 @@ const CARDS: Card[] = [
     },
   },
   {
+    id: 'pickup_radius',
+    title: '구슬 자석',
+    desc: '경험치 획득 반경 +20%',
+    apply: (g) => {
+      g.state.player.pickupRadius *= 1.2;
+    },
+  },
+  {
+    id: 'add_barrel',
+    title: '포신 추가',
+    desc: '포신 +1 (탄환이 부채꼴로 발사됨)',
+    apply: (g) => {
+      g.state.player.turret.barrels += 1;
+    },
+  },
+  {
     id: 'move_speed',
     title: '드리프트 가속',
     desc: '본체 이동속도 +10%',
@@ -73,12 +89,24 @@ const CARDS: Card[] = [
 
 let container: HTMLDivElement | null = null;
 
+// 첫 레벨업 메뉴에서 반드시 보여줄 필수 카드 — 초반 빌드의 뼈대
+const MANDATORY_FIRST_IDS = ['bullet_damage', 'pickup_radius', 'add_barrel'] as const;
+
 const pickThree = (): Card[] => {
   const pool = [...CARDS];
   const out: Card[] = [];
   for (let i = 0; i < 3 && pool.length > 0; i++) {
     const idx = Math.floor(Math.random() * pool.length);
     out.push(pool.splice(idx, 1)[0]!);
+  }
+  return out;
+};
+
+const pickMandatoryThree = (): Card[] => {
+  const out: Card[] = [];
+  for (const id of MANDATORY_FIRST_IDS) {
+    const c = CARDS.find((x) => x.id === id);
+    if (c) out.push(c);
   }
   return out;
 };
@@ -114,7 +142,10 @@ const show = (game: Game): void => {
   // 빈 영역 클릭이 캔버스로 새지 않도록 차단
   overlay.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-  for (const card of pickThree()) {
+  const cards = game.state.firstCardShown ? pickThree() : pickMandatoryThree();
+  game.state.firstCardShown = true;
+
+  for (const card of cards) {
     const el = document.createElement('div');
     styleAssign(el, {
       flex: isNarrow ? '0 0 auto' : '1 1 200px',

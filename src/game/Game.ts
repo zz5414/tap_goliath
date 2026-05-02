@@ -19,6 +19,8 @@ export interface GameState {
   xpOrbs: XpOrb[];
   xp: XpStats;
   pendingLevelUps: number;
+  // 첫 레벨업 메뉴에서는 필수 카드 3종을 강제로 보여주기 위한 플래그
+  firstCardShown: boolean;
   camera: Camera;
   time: number;
   kills: number;
@@ -44,6 +46,7 @@ export class Game {
       xpOrbs: [],
       xp: createXpStats(),
       pendingLevelUps: 0,
+      firstCardShown: false,
       camera,
       time: 0,
       kills: 0,
@@ -89,21 +92,26 @@ export class Game {
       rotateTurretToward(s.player.turret, s.player.pos, s.targetedEnemy.pos, dt);
     }
 
-    // 6. 발사
+    // 6. 발사 — 포신 수만큼 부채꼴로 동시 발사
     s.player.turret.fireCooldown -= dt;
     if (s.player.turret.fireCooldown <= 0 && s.targetedEnemy) {
       s.player.turret.fireCooldown += s.player.turret.fireInterval;
-      const a = s.player.turret.angle;
-      s.bullets.push({
-        pos: { x: s.player.pos.x, y: s.player.pos.y },
-        vel: {
-          x: Math.cos(a) * s.player.turret.bulletSpeed,
-          y: Math.sin(a) * s.player.turret.bulletSpeed,
-        },
-        damage: s.player.turret.bulletDamage,
-        lifetime: BALANCE.BULLET_LIFETIME,
-        owner: 'player',
-      });
+      const t = s.player.turret;
+      const n = Math.max(1, t.barrels);
+      const center = (n - 1) / 2;
+      for (let i = 0; i < n; i++) {
+        const a = t.angle + (i - center) * BALANCE.TURRET_BARREL_SPREAD;
+        s.bullets.push({
+          pos: { x: s.player.pos.x, y: s.player.pos.y },
+          vel: {
+            x: Math.cos(a) * t.bulletSpeed,
+            y: Math.sin(a) * t.bulletSpeed,
+          },
+          damage: t.bulletDamage,
+          lifetime: BALANCE.BULLET_LIFETIME,
+          owner: 'player',
+        });
+      }
     } else if (s.player.turret.fireCooldown < 0) {
       // 타겟 없을 땐 쿨다운을 0으로 클램프
       s.player.turret.fireCooldown = 0;
@@ -117,7 +125,7 @@ export class Game {
     this.handleCollisions();
 
     // 9. XP 흡수 / 레벨업
-    const result = updateXp(s.xp, s.xpOrbs, s.player.pos, dt);
+    const result = updateXp(s.xp, s.xpOrbs, s.player.pos, s.player.pickupRadius, dt);
     s.xpOrbs = result.remaining;
     s.pendingLevelUps += result.levelUps;
 
@@ -156,6 +164,22 @@ export class Game {
       }
     }
 
+    // 위험 지형 ↔ 적 (플레이어 무적 여부와 무관하게 항상 처리)
+    for (const e of s.enemies) {
+      if (e.hp <= 0) continue;
+      const er = BALANCE.HAZARD_RADIUS_MAX + e.radius;
+      for (const h of hazardsNear(e.pos, er, s.time)) {
+        if (circleCircle(e.pos, e.radius, h.pos, h.radius)) {
+          e.hp -= BALANCE.HAZARD_DAMAGE_TO_ENEMY;
+          if (e.hp <= 0) {
+            s.kills += 1;
+            s.xpOrbs.push(createXpOrb(e.pos, BALANCE.XP_PER_KILL));
+          }
+          break;
+        }
+      }
+    }
+
     // 적 ↔ 본체 (사각형)
     if (s.player.invulnTimer > 0) return;
     const half = BALANCE.PLAYER_SIZE / 2;
@@ -170,7 +194,7 @@ export class Game {
 
     // 위험 지형 ↔ 본체
     const range = BALANCE.HAZARD_RADIUS_MAX + half + 8;
-    for (const h of hazardsNear(s.player.pos, range)) {
+    for (const h of hazardsNear(s.player.pos, range, s.time)) {
       if (circleRect(h.pos, h.radius, s.player.pos, half, half)) {
         s.player.hp -= BALANCE.HAZARD_DAMAGE;
         s.player.invulnTimer = BALANCE.PLAYER_INVULN_DURATION;

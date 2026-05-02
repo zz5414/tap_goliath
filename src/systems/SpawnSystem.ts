@@ -17,9 +17,10 @@ export class SpawnSystem {
       BALANCE.ENEMY_SPAWN_INTERVAL - this.elapsed / BALANCE.ENEMY_SPAWN_INTERVAL_DECAY
     );
     this.timer += interval;
-    const count =
+    const count = Math.floor(
       BALANCE.ENEMY_SPAWN_COUNT_INITIAL +
-      this.waveCount * BALANCE.ENEMY_SPAWN_COUNT_GROWTH;
+        this.waveCount * BALANCE.ENEMY_SPAWN_COUNT_GROWTH
+    );
     this.waveCount += 1;
     for (let i = 0; i < count; i++) {
       enemies.push(createChaser(this.randomSpawnPoint(playerPos)));

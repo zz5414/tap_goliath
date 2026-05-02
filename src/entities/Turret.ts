@@ -9,6 +9,8 @@ export interface Turret {
   fireCooldown: number;
   bulletSpeed: number;
   bulletDamage: number;
+  // 포신 수. 한 번의 사격 틱에서 부채꼴로 N발이 발사된다.
+  barrels: number;
 }
 
 export const createTurret = (): Turret => ({
@@ -18,6 +20,7 @@ export const createTurret = (): Turret => ({
   fireCooldown: BALANCE.TURRET_FIRE_INTERVAL,
   bulletSpeed: BALANCE.BULLET_SPEED,
   bulletDamage: BALANCE.BULLET_DAMAGE,
+  barrels: BALANCE.TURRET_BARRELS,
 });
 
 export const rotateTurretToward = (
