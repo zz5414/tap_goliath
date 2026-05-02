@@ -107,9 +107,6 @@ export class HUD {
     ctx.font = '16px ui-monospace, SFMono-Regular, Menlo, monospace';
     ctx.fillText(`Survived ${formatTime(state.time)}`, w / 2, h / 2);
     ctx.fillText(`Kills ${state.kills}`, w / 2, h / 2 + 24);
-
-    ctx.font = '13px ui-monospace, SFMono-Regular, Menlo, monospace';
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.fillText('Tap / Click / Space to restart', w / 2, h / 2 + 60);
+    // 재시작 입력은 DOM 버튼(GameOverMenu)으로 분리됨
   }
 }

@@ -103,6 +103,11 @@ let container: HTMLDivElement | null = null;
 // 첫 레벨업 메뉴(레벨 2 진입 시)에서 반드시 보여줄 필수 카드 — 초반 빌드의 뼈대
 const MANDATORY_FIRST_IDS = ['bullet_damage', 'pickup_radius', 'rear_cannon'] as const;
 
+// 두 번 탭(더블탭)하여 확정하는 윈도우. 첫 탭 후 이 시간 내 같은 카드를 다시 누르면 적용된다.
+const CONFIRM_WINDOW_MS = 800;
+const BORDER_DEFAULT = '1px solid rgba(95,255,204,0.3)';
+const BORDER_ARMED = '2px solid #fb3';
+
 const pickThree = (game: Game): Card[] => {
   const pool = CARDS.filter((c) => c.available?.(game) ?? true);
   const out: Card[] = [];
@@ -150,11 +155,52 @@ const show = (game: Game): void => {
     boxSizing: 'border-box',
     touchAction: 'manipulation',
   });
-  // 빈 영역 클릭이 캔버스로 새지 않도록 차단
-  overlay.addEventListener('pointerdown', (e) => e.stopPropagation());
+  // 빈 영역 클릭이 캔버스로 새지 않도록 차단 + 빈 영역 탭은 arming 도 해제
+  overlay.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    setArmed(null);
+  });
 
   const cards = game.state.firstCardShown ? pickThree(game) : pickMandatoryThree();
   game.state.firstCardShown = true;
+
+  // arming 상태 — show() 마다 새로 만들어지는 클로저에 보관
+  let armedId: string | null = null;
+  let armTimer: ReturnType<typeof setTimeout> | null = null;
+  const elements = new Map<string, { el: HTMLElement; hint: HTMLElement }>();
+
+  const setArmed = (id: string | null): void => {
+    if (armTimer !== null) {
+      clearTimeout(armTimer);
+      armTimer = null;
+    }
+    // 이전 arming 시각 복구
+    if (armedId !== null && armedId !== id) {
+      const prev = elements.get(armedId);
+      if (prev) {
+        prev.el.style.border = BORDER_DEFAULT;
+        prev.hint.style.opacity = '0';
+      }
+    }
+    armedId = id;
+    if (id !== null) {
+      const cur = elements.get(id);
+      if (cur) {
+        cur.el.style.border = BORDER_ARMED;
+        cur.hint.style.opacity = '1';
+      }
+      armTimer = setTimeout(() => {
+        // 시간 초과 — arming 해제
+        const el = armedId !== null ? elements.get(armedId) : null;
+        if (el) {
+          el.el.style.border = BORDER_DEFAULT;
+          el.hint.style.opacity = '0';
+        }
+        armedId = null;
+        armTimer = null;
+      }, CONFIRM_WINDOW_MS);
+    }
+  };
 
   for (const card of cards) {
     const el = document.createElement('div');
@@ -164,7 +210,7 @@ const show = (game: Game): void => {
       maxWidth: isNarrow ? '420px' : '260px',
       minHeight: isNarrow ? '96px' : '180px',
       background: '#15151f',
-      border: '1px solid rgba(95,255,204,0.3)',
+      border: BORDER_DEFAULT,
       borderRadius: '12px',
       padding: isNarrow ? '18px 16px' : '20px 16px',
       color: '#fff',
@@ -197,13 +243,30 @@ const show = (game: Game): void => {
       lineHeight: '1.5',
     });
 
+    const hint = document.createElement('div');
+    hint.textContent = '한 번 더 탭하여 확정';
+    styleAssign(hint, {
+      fontSize: '12px',
+      marginTop: '10px',
+      color: '#fb3',
+      opacity: '0',
+      transition: 'opacity 0.12s ease-out',
+    });
+
     el.appendChild(title);
     el.appendChild(desc);
+    el.appendChild(hint);
     el.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
       e.preventDefault();
-      apply(game, card);
+      if (armedId === card.id) {
+        setArmed(null);
+        apply(game, card);
+      } else {
+        setArmed(card.id);
+      }
     });
+    elements.set(card.id, { el, hint });
     overlay.appendChild(el);
   }
 

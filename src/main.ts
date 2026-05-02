@@ -3,6 +3,7 @@ import { Game } from './game/Game.ts';
 import { Input } from './game/Input.ts';
 import { HUD } from './render/HUD.ts';
 import { Renderer } from './render/Renderer.ts';
+import { closeGameOverMenu, tickGameOverMenu } from './ui/GameOverMenu.ts';
 import { closeLevelUpMenu, tickLevelUpMenu } from './ui/LevelUpMenu.ts';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
@@ -33,13 +34,16 @@ const hud = new HUD(ctx);
 const input = new Input();
 input.attach(canvas);
 input.onButtonPress(() => {
-  if (game.state.gameOver) {
-    closeLevelUpMenu();
-    game = new Game(camera);
-    return;
-  }
+  // 게임오버 시 캔버스 입력은 무시 — 재시작은 별도 버튼(GameOverMenu)을 통해서만.
+  if (game.state.gameOver) return;
   game.pressButton();
 });
+
+const restart = (): void => {
+  closeLevelUpMenu();
+  closeGameOverMenu();
+  game = new Game(camera);
+};
 
 let lastTime = performance.now();
 const frame = (now: number): void => {
@@ -50,6 +54,7 @@ const frame = (now: number): void => {
 
   game.update(dt);
   tickLevelUpMenu(game);
+  tickGameOverMenu(game, restart);
   renderer.draw(game.state);
   hud.draw(game.state);
 

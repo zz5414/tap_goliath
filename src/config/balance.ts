@@ -61,7 +61,7 @@ export const BALANCE = {
   XP_ORB_RADIUS: 4,
   XP_PER_KILL: 5,
   XP_LEVELUP_BASE: 15,
-  XP_LEVELUP_GROWTH: 1.4,
+  XP_LEVELUP_GROWTH: 1.1,
 
   // 카메라
   CAMERA_LERP: 0.1,
